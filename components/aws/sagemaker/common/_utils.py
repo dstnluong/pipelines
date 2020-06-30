@@ -205,6 +205,21 @@ def create_training_job_request(args):
 
     enable_spot_instance_support(request, args)
 
+    ### Update DebuggerHookConfig, CollectionConfigurations, and DebugRuleConfigurations
+    if args['debug_hook_config']:
+        request['DebugHookConfig'] = args['debug_hook_config']
+        if 'CollectionConfigurations' not in request['DebugHookConfig']:
+            request['DebugHookConfig']['CollectionConfigurations'] = []
+
+    if args['collection_config']:
+        for key, val in args['collection_config'].items():
+            request['DebugHookConfig']['CollectionConfigurations'].append({"CollectionName": key, "CollectionParameters": val})
+    else:
+            request['DebugHookConfig'].pop('CollectionConfigurations')
+
+    if args['debug_rule_config']:
+        request['DebugRuleConfigurations'] = args['debug_rule_config']
+
     ### Update tags
     for key, val in args['tags'].items():
         request['Tags'].append({'Key': key, 'Value': val})
