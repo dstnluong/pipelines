@@ -17,6 +17,46 @@ components_dir = os.path.join(cur_file_dir, '../../../../components/aws/sagemake
 
 sagemaker_train_op = components.load_component_from_file(components_dir + '/train/component.yaml')
 
+collection_config_1 = {
+    "collection_name_1" : {
+        "include_regex": ".*"
+    }
+}
+collection_config_2 = {
+    "collection_name_2" : {
+        "include_regex": ".*"
+    }
+}
+
+debugger_hook_config = {
+    "S3OutputPath":"s3://path/for/data/emission",
+    "LocalPath":"/opt/ml/output/tensors",
+    "HookParameters": {
+        "save_interval": "10"
+    }
+}
+
+DebugRuleConfigurations=[
+	{
+		"RuleConfigurationName": "VGRule",
+		"InstanceType": "ml.t3.medium",
+		"VolumeSizeInGB": 30,
+		"RuleEvaluatorImage": "864354269164.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rule-evaluator:latest",
+		"RuleParameters": {
+			"source_s3_uri": "s3://path/to/vanishing_gradient_rule.py",
+			"rule_to_invoke": "VanishingGradient",
+			"threshold": "20.0"
+		}
+	}
+]
+
+collection_list = {}
+
+
+for collection in [collection_config_1, collection_config_2]:
+    for key, val in collection.items():
+        collection_list[key] = val
+
 channelObjList = []
 
 channelObj = {
@@ -60,7 +100,10 @@ def training(
         spot_instance=False,
         max_wait_time=3600,
         checkpoint_config={},
-        role=''
+        debug_hook_config=debugger_hook_config,
+        collection_config=collection_list,
+        debug_rule_config=DebugRuleConfigurations,
+        role='arn:aws:iam::169544399729:role/kfp-example-sagemaker-execution-role'
         ):
     training = sagemaker_train_op(
         region=region,
@@ -80,6 +123,9 @@ def training(
         spot_instance=spot_instance,
         max_wait_time=max_wait_time,
         checkpoint_config=checkpoint_config,
+        debug_hook_config=debug_hook_config,
+        collection_config=collection_config,
+        debug_rule_config=debug_rule_config,
         role=role,
     )#.apply(use_aws_secret('aws-secret', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'))
 

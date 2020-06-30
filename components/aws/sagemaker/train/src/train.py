@@ -40,8 +40,8 @@ def create_parser():
   parser.add_argument('--network_isolation', type=_utils.str_to_bool, required=False, help='Isolates the training container.', default=True)
   parser.add_argument('--traffic_encryption', type=_utils.str_to_bool, required=False, help='Encrypts all communications between ML compute instances in distributed training.', default=False)
   parser.add_argument('--debug_hook_config', type=_utils.yaml_or_json_str, required=False, help='Configuration information for the debug hook parameters, collection configuration, and storage paths.', default={})
-  parser.add_argument('--collection_config', type=_utils.yaml_or_json_str, required=False, help='Configuration information for tensor collections.')
-  parser.add_argument('--debug_rule_config', type=_utils.yaml_or_json_str, required=False, help='Configuration information for debugging rules.')
+  parser.add_argument('--collection_config', type=_utils.yaml_or_json_str, required=False, help='Configuration information for tensor collections.', default={})
+  parser.add_argument('--debug_rule_config', type=_utils.yaml_or_json_str, required=False, help='Configuration information for debugging rules.', default=[])
 
   ### Start spot instance support
   parser.add_argument('--spot_instance', type=_utils.str_to_bool, required=False, help='Use managed spot training.', default=False)

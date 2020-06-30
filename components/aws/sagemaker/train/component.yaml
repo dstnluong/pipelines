@@ -100,9 +100,11 @@ inputs:
     type: JsonObject
   - name: collection_config 
     description: 'Configuration information for tensor collections.'
+    default: '{}'
     type: JsonObject
   - name: debug_rule_config
     description: 'Configuration information for debugging rules.'
+    default: '[]'
     type: JsonArray
   - name: tags
     description: 'Key-value pairs, to categorize AWS resources.'
