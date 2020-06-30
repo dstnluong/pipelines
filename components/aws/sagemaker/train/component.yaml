@@ -94,6 +94,16 @@ inputs:
     description: 'The endpoint URL for the private link VPC endpoint.'
     default: ''
     type: String
+  - name: debug_hook_config
+    description: 'Configuration information for the debug hook parameters, collection configuration, and storage paths.'
+    default: '{}'
+    type: JsonObject
+  - name: collection_config 
+    description: 'Configuration information for tensor collections.'
+    type: JsonObject
+  - name: debug_rule_config
+    description: 'Configuration information for debugging rules.'
+    type: JsonArray
   - name: tags
     description: 'Key-value pairs, to categorize AWS resources.'
     default: '{}'
@@ -104,7 +114,7 @@ outputs:
   - {name: training_image,        description: 'The registry path of the Docker image that contains the training algorithm'}
 implementation:
   container:
-    image: amazon/aws-sagemaker-kfp-components:0.5.0
+    image: dstnluong/debug-component
     command: ['python3']
     args: [
       train.py,
@@ -129,6 +139,9 @@ implementation:
       --vpc_subnets, {inputValue: vpc_subnets},
       --network_isolation, {inputValue: network_isolation},
       --traffic_encryption, {inputValue: traffic_encryption},
+      --debug_hook_config, {inputValue: debug_hook_config},
+      --collection_config, {inputValue: collection_config},
+      --debug_rule_config, {inputValue: debug_rule_config},
       --spot_instance, {inputValue: spot_instance},
       --max_wait_time, {inputValue: max_wait_time},
       --checkpoint_config, {inputValue: checkpoint_config},

@@ -1,4 +1,4 @@
-TrainingJobName: ''
+
 HyperParameters: {}
 AlgorithmSpecification:
   TrainingImage: ''
@@ -21,6 +21,12 @@ VpcConfig:
 StoppingCondition:
   MaxRuntimeInSeconds: 86400
   MaxWaitTimeInSeconds: 86400
+DebugHookConfig:
+  CollectionConfigurations: []
+  HookParameters: {}
+  LocalPath: ''
+  S3OutputPath: ''
+DebugRuleConfigurations: []
 CheckpointConfig:
   S3Uri: ''
   LocalPath: ''
