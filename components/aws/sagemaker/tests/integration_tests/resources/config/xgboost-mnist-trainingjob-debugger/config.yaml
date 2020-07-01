@@ -31,19 +31,23 @@ Arguments:
   network_isolation: "True"
   traffic_encryption: "False"
   spot_instance: "False"
-  max_wait_time: 3600 
+  max_wait_time: 3600
   checkpoint_config: "{}"
   debug_hook_config:
     S3OutputPath: s3://((DATA_BUCKET))/xgboost-debugger/hookconfig
-  collection_config:
-    feature_importance:
-      save_interval: "5"
-    losses:
-      save_interval: "500" 
-    average_shap:
-      save_interval: "5" 
-    metrics:
-      save_interval: "5" 
+    CollectionConfigurations:
+      - CollectionName: "feature_importance"
+        CollectionParameters:
+          save_interval: "5"
+      - CollectionName: "losses"
+        CollectionParameters:
+          save_interval: "500"
+      - CollectionName: "average_shap"
+        CollectionParameters:
+          save_interval: "5"
+      - CollectionName: "metrics"
+        CollectionParameters:
+          save_interval: "5"
   debug_rule_config:
     - RuleConfigurationName: LossNotDecreasing
       RuleEvaluatorImage: ((BUILTIN_RULE_REGISTRY)).dkr.ecr.((REGION)).amazonaws.com/sagemaker-debugger-rules:latest
@@ -52,3 +56,4 @@ Arguments:
         num_steps: "10"
         rule_to_invoke: LossNotDecreasing
   role: ((ROLE_ARN))
+

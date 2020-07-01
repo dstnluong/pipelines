@@ -10,7 +10,7 @@ from utils import minio_utils
     "test_file_dir",
     [
         pytest.param(
-            "resources/config/create-workteam", 
+            "resources/config/create-workteam",
             marks=pytest.mark.canary_test
         )
     ],

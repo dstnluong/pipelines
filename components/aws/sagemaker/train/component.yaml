@@ -98,14 +98,14 @@ inputs:
     description: 'Configuration information for the debug hook parameters, collection configuration, and storage paths.'
     default: '{}'
     type: JsonObject
-  - name: collection_config 
-    description: 'Configuration information for tensor collections.'
-    default: '{}'
-    type: JsonObject
   - name: debug_rule_config
     description: 'Configuration information for debugging rules.'
     default: '[]'
     type: JsonArray
+  - name: tensorboard_output_config
+    description: 'Configuration of storage locations for TensorBoard output.'
+    default: ''
+    type: JsonObject
   - name: tags
     description: 'Key-value pairs, to categorize AWS resources.'
     default: '{}'
@@ -142,8 +142,8 @@ implementation:
       --network_isolation, {inputValue: network_isolation},
       --traffic_encryption, {inputValue: traffic_encryption},
       --debug_hook_config, {inputValue: debug_hook_config},
-      --collection_config, {inputValue: collection_config},
       --debug_rule_config, {inputValue: debug_rule_config},
+      --tensorboard_output_config, {inputValue: tensorboard_output_config},
       --spot_instance, {inputValue: spot_instance},
       --max_wait_time, {inputValue: max_wait_time},
       --checkpoint_config, {inputValue: checkpoint_config},
