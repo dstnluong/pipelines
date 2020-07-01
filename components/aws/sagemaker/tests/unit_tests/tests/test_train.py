@@ -61,6 +61,7 @@ class TrainTestCase(unittest.TestCase):
     mock_client = MagicMock()
     mock_args = self.parser.parse_args(required_args + ['--job_name', 'test-job'])
     response = _utils.create_training_job(mock_client, vars(mock_args))
+    print(response)
 
     mock_client.create_training_job.assert_called_once_with(
       AlgorithmSpecification={'TrainingImage': 'test-image', 'TrainingInputMode': 'File'},
@@ -79,6 +80,12 @@ class TrainTestCase(unittest.TestCase):
       ResourceConfig={'InstanceType': 'ml.m4.xlarge', 'InstanceCount': 1, 'VolumeSizeInGB': 50, 'VolumeKmsKeyId': ''},
       RoleArn='arn:aws:iam::123456789012:user/Development/product_1234/*',
       StoppingCondition={'MaxRuntimeInSeconds': 3600},
+      DebugHookConfig={
+          'HookParameters':{},
+          'LocalPath':'',
+          'S3OutputPath':''
+      },
+      DebugRuleConfigurations=[],
       Tags=[],
       TrainingJobName='test-job'
     )
