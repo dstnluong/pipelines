@@ -204,15 +204,18 @@ def create_training_job_request(args):
         request['DebugHookConfig'] = args['debug_hook_config']
         if 'CollectionConfigurations' not in request['DebugHookConfig']:
             request['DebugHookConfig']['CollectionConfigurations'] = []
-
-    if args['collection_config']:
-        for key, val in args['collection_config'].items():
-            request['DebugHookConfig']['CollectionConfigurations'].append({"CollectionName": key, "CollectionParameters": val})
+        if args['collection_config']:
+            for key, val in args['collection_config'].items():
+                request['DebugHookConfig']['CollectionConfigurations'].append({"CollectionName": key, "CollectionParameters": val})
+#        else:
+#            request['DebugHookConfig'].pop('CollectionConfigurations')
     else:
-            request['DebugHookConfig'].pop('CollectionConfigurations')
+        request.pop('DebugHookConfig')
 
     if args['debug_rule_config']:
         request['DebugRuleConfigurations'] = args['debug_rule_config']
+    else:
+        request.pop('DebugRuleConfigurations')
 
     ### Update tags
     for key, val in args['tags'].items():
