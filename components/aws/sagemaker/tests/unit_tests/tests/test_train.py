@@ -80,12 +80,6 @@ class TrainTestCase(unittest.TestCase):
       ResourceConfig={'InstanceType': 'ml.m4.xlarge', 'InstanceCount': 1, 'VolumeSizeInGB': 50, 'VolumeKmsKeyId': ''},
       RoleArn='arn:aws:iam::123456789012:user/Development/product_1234/*',
       StoppingCondition={'MaxRuntimeInSeconds': 3600},
-      DebugHookConfig={
-          'HookParameters':{},
-          'LocalPath':'',
-          'S3OutputPath':''
-      },
-      DebugRuleConfigurations=[],
       Tags=[],
       TrainingJobName='test-job'
     )
