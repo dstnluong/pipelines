@@ -34,14 +34,13 @@ collection_list = {
     }
 }
 
-rule_1={
+debug_rule_configurations=[{
     "RuleConfigurationName": "Amazon-VanishingGradient",
     "RuleEvaluatorImage": "503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest",
     "RuleParameters": {
       "rule_to_invoke": "Overfit"
     }
-}
-DebugRuleConfigurations=[rule_1]
+}]
 
 channelObjList = []
 
@@ -88,7 +87,7 @@ def training(
         checkpoint_config={},
         debug_hook_config=debugger_hook_config,
         collection_config=collection_list,
-        debug_rule_config=DebugRuleConfigurations,
+        debug_rule_config=debug_rule_configurations,
         role='arn:aws:iam::169544399729:role/kfp-example-sagemaker-execution-role'
         ):
     training = sagemaker_train_op(
