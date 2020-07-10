@@ -207,8 +207,8 @@ def create_training_job_request(args):
         if args['collection_config']:
             for key, val in args['collection_config'].items():
                 request['DebugHookConfig']['CollectionConfigurations'].append({"CollectionName": key, "CollectionParameters": val})
-#        else:
-#            request['DebugHookConfig'].pop('CollectionConfigurations')
+        else:
+            request['DebugHookConfig'].pop('CollectionConfigurations')
     else:
         request.pop('DebugHookConfig')
 
@@ -240,18 +240,30 @@ def create_training_job(client, args):
       raise Exception(e.response['Error']['Message'])
 
 
-def wait_for_training_job(client, training_job_name, poll_interval=30):
+def wait_for_training_job(client, training_job_name, poll_interval=31):
   while(True):
     response = client.describe_training_job(TrainingJobName=training_job_name)
     status = response['TrainingJobStatus']
-    if status == 'Completed':
+    # Ensure all rules have finished
+    rules_status = all(map(lambda debug_rule: debug_rule['RuleEvaluationStatus'] != "InProgress", response['DebugRuleEvaluationStatuses']))
+    if status == 'Completed' and rules_status:
       logging.info("Training job ended with status: " + status)
+      logging.info("Rules have ended with status: ")
+      for debug_rule in response['DebugRuleEvaluationStatuses']:
+          logging.info(" - {}: {}".format(debug_rule['RuleConfigurationName'], debug_rule['RuleEvaluationStatus']))
+          if debug_rule['StatusDetails']:
+              logging.info("   - {}".format(debug_rule['StatusDetails']))
       break
     if status == 'Failed':
       message = response['FailureReason']
       logging.info('Training failed with the following error: {}'.format(message))
       raise Exception('Training job failed')
     logging.info("Training job is still in status: " + status)
+
+    if response['DebugRuleEvaluationStatuses']:
+        logging.info('Debugger Rule Status:')
+        for debug_rule in response['DebugRuleEvaluationStatuses']:
+            logging.info(" - {}: {}".format(debug_rule['RuleConfigurationName'], debug_rule['RuleEvaluationStatus']))
     time.sleep(poll_interval)
 
 
