@@ -245,7 +245,10 @@ def wait_for_training_job(client, training_job_name, poll_interval=31):
     response = client.describe_training_job(TrainingJobName=training_job_name)
     status = response['TrainingJobStatus']
     # Ensure all rules have finished
-    rules_status = all(map(lambda debug_rule: debug_rule['RuleEvaluationStatus'] != "InProgress", response['DebugRuleEvaluationStatuses']))
+    if response['DebugRuleEvaluationStatuses']: 
+        rules_status = all(map(lambda debug_rule: debug_rule['RuleEvaluationStatus'] != "InProgress", response['DebugRuleEvaluationStatuses']))
+    else:
+        rules_status = True
     if status == 'Completed' and rules_status:
       logging.info("Training job ended with status: " + status)
       logging.info("Rules have ended with status: ")
