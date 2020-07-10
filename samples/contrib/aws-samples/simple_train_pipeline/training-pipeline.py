@@ -17,16 +17,19 @@ components_dir = os.path.join(cur_file_dir, '../../../../components/aws/sagemake
 
 sagemaker_train_op = components.load_component_from_file(components_dir + '/train/component.yaml')
 
-collection_config_2 = {
-    "gradients" : {
-        "save_interval": "500"
+debugger_hook_config = {
+    "S3OutputPath":"s3://dusluong-bucket0/emission-demo",
+    "LocalPath":"/opt/ml/output/tensors",
+    "HookParameters": {
+        "save_interval": "10"
     }
 }
 
-debugger_hook_config = {
-    "S3OutputPath":"s3://dusluong-bucket0/emission",
-    "LocalPath":"/opt/ml/output/tensors",
-    "HookParameters": {
+collection_list = {
+    "gradients" : {
+        "save_interval": "50"
+    }, 
+    "losses" : {
         "save_interval": "10"
     }
 }
@@ -35,18 +38,10 @@ rule_1={
     "RuleConfigurationName": "Amazon-VanishingGradient",
     "RuleEvaluatorImage": "503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest",
     "RuleParameters": {
-      "rule_to_invoke": "VanishingGradient",
-      "threshold": "20.0"
+      "rule_to_invoke": "Overfit"
     }
 }
 DebugRuleConfigurations=[rule_1]
-
-collection_list = {}
-
-
-for collection in [collection_config_2]:
-    for key, val in collection.items():
-        collection_list[key] = val
 
 channelObjList = []
 
