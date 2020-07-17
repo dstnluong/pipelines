@@ -17,7 +17,11 @@ from utils import sagemaker_utils
             "resources/config/fsx-mnist-training",
             marks=pytest.mark.fsx_test
         ),
-        "resources/config/spot-sample-pipeline-training"
+        pytest.param(
+            "resources/config/xgboost-mnist-trainingjob-debugger",
+            marks=pytest.mark.canary_test
+        ),
+        "resources/config/spot-sample-pipeline-training",
     ],
 )
 def test_trainingjob(
