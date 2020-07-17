@@ -247,33 +247,40 @@ def create_training_job(client, args):
 
 
 def wait_for_training_job(client, training_job_name, poll_interval=31):
-  while(True):
-    response = client.describe_training_job(TrainingJobName=training_job_name)
-    status = response['TrainingJobStatus']
-    # Ensure all rules have finished
-    if 'DebugRuleEvaluationStatuses' in response: 
-        rules_status = all(map(lambda debug_rule: debug_rule['RuleEvaluationStatus'] != "InProgress", response['DebugRuleEvaluationStatuses']))
-    else:
-        rules_status = True
-    if status == 'Completed' and rules_status:
-      logging.info("Training job ended with status: " + status)
-      logging.info("Rules have ended with status: ")
-      for debug_rule in response['DebugRuleEvaluationStatuses']:
-          logging.info(" - {}: {}".format(debug_rule['RuleConfigurationName'], debug_rule['RuleEvaluationStatus']))
-          if debug_rule['StatusDetails']:
-              logging.info("   - {}".format(debug_rule['StatusDetails']))
-      break
-    if status == 'Failed':
-      message = response['FailureReason']
-      logging.info('Training failed with the following error: {}'.format(message))
-      raise Exception('Training job failed')
-    logging.info("Training job is still in status: " + status)
+    while(True):
+        response = client.describe_training_job(TrainingJobName=training_job_name)
+        status = response['TrainingJobStatus']
+        if status == 'Completed':
+            logging.info("Training job ended with status: " + status)
+            wait_for_debug_rules(client, training_job_name, poll_interval)
+            break
+        if status == 'Failed':
+            message = response['FailureReason']
+            logging.info('Training failed with the following error: {}'.format(message))
+            raise Exception('Training job failed')
+        logging.info("Training job is still in status: " + status)
+        time.sleep(poll_interval)
 
-    if 'DebugRuleEvaluationStatuses' in response:
+
+def wait_for_debug_rules(client, training_job_name, poll_interval=31):
+    while(True):
+        response = client.describe_training_job(TrainingJobName=training_job_name)
+        if 'DebugRuleEvaluationStatuses' not in response:
+            break
+
+        rules_finished = all(map(lambda debug_rule: debug_rule['RuleEvaluationStatus'] != "InProgress", response['DebugRuleEvaluationStatuses']))
+        if rules_finished:
+            logging.info("Rules have ended with status: ")
+            for debug_rule in response['DebugRuleEvaluationStatuses']:
+                logging.info(" - {}: {}".format(debug_rule['RuleConfigurationName'], debug_rule['RuleEvaluationStatus']))
+                if 'StatusDetails' in debug_rule and debug_rule['StatusDetails']:
+                    logging.info("   - {}".format(debug_rule['StatusDetails']))
+            break
         logging.info('Debugger Rule Status:')
         for debug_rule in response['DebugRuleEvaluationStatuses']:
-            logging.info(" - {}: {}".format(debug_rule['RuleConfigurationName'], debug_rule['RuleEvaluationStatus']))
-    time.sleep(poll_interval)
+            if 'RuleEvaluationStatus'in debug_rule and debug_rule['RuleEvaluationStatus']:
+                logging.info(" - {}: {}".format(debug_rule['RuleConfigurationName'], debug_rule['RuleEvaluationStatus'])) 
+        time.sleep(poll_interval)
 
 
 def get_model_artifacts_from_job(client, job_name):
