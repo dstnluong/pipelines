@@ -25,10 +25,10 @@ def training_pipeline(
     traffic_encryption="",
     spot_instance="",
     max_wait_time="",
-    checkpoint_config="{}",
-    debug_hook_config="{}",
-    collection_config="{}",
-    debug_rule_config="[]",
+    checkpoint_config="",
+    debug_hook_config="",
+    collection_config="",
+    debug_rule_config="",
     role="",
 ):
     sagemaker_train_op(
