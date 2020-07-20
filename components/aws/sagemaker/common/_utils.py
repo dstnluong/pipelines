@@ -209,8 +209,6 @@ def create_training_job_request(args):
     if args['debug_hook_config']:
         request['DebugHookConfig'] = args['debug_hook_config']
         request['DebugHookConfig']['CollectionConfigurations'] = []
-    else:
-        request.pop('DebugHookConfig')
 
     if args['collection_config']:
         for key, val in args['collection_config'].items():
@@ -222,6 +220,9 @@ def create_training_job_request(args):
         request['DebugRuleConfigurations'] = args['debug_rule_config']
     else:
         request.pop('DebugRuleConfigurations')
+
+    if args['debug_rule_config']:
+        request['DebugRuleConfigurations'] = args['debug_rule_config']
 
     ### Update tags
     for key, val in args['tags'].items():
