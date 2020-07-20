@@ -20,6 +20,8 @@ import random
 import json
 import yaml
 import re
+import json
+from pathlib2 import Path
 
 import boto3
 import botocore
@@ -28,6 +30,9 @@ from sagemaker.amazon.amazon_estimator import get_image_uri
 
 import logging
 logging.getLogger().setLevel(logging.INFO)
+
+# this error message is used in integration tests
+CW_ERROR_MESSAGE = 'Error in fetching CloudWatch logs for SageMaker job'
 
 # Mappings are extracted from the first table in https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-algo-docker-registry-paths.html
 built_in_algos = {
@@ -65,7 +70,7 @@ def nullable_string_argument(value):
 
 def add_default_client_arguments(parser):
     parser.add_argument('--region', type=str, required=True, help='The region where the training job launches.')
-    parser.add_argument('--endpoint_url', type=nullable_string_argument, required=False, help='The URL to use when communicating with the Sagemaker service.')
+    parser.add_argument('--endpoint_url', type=nullable_string_argument, required=False, help='The URL to use when communicating with the SageMaker service.')
 
 
 def get_component_version():
@@ -104,6 +109,7 @@ def print_logs_for_job(cw_client, log_grp, job_name):
 
         logging.info('\n******************** End of CloudWatch logs for {} {} ********************\n'.format(log_grp, job_name))
     except Exception as e:
+        logging.error(CW_ERROR_MESSAGE)
         logging.error(e)
 
 
@@ -226,7 +232,7 @@ def create_training_job_request(args):
 
 
 def create_training_job(client, args):
-  """Create a Sagemaker training job."""
+  """Create a SageMaker training job."""
   request = create_training_job_request(args)
   try:
       client.create_training_job(**request)
@@ -293,6 +299,13 @@ def get_image_from_job(client, job_name):
         image = client.describe_algorithm(AlgorithmName=algorithm_name)['TrainingSpecification']['TrainingImage']
 
     return image
+
+
+def stop_training_job(client, job_name):
+    try:
+        client.stop_training_job(TrainingJobName=job_name)
+    except ClientError as e:
+        raise Exception(e.response['Error']['Message'])
 
 
 def create_model(client, args):
@@ -544,6 +557,13 @@ def wait_for_transform_job(client, batch_job_name, poll_interval=30):
     time.sleep(poll_interval)
 
 
+def stop_transform_job(client, job_name):
+    try:
+        client.stop_transform_job(TransformJobName=job_name)
+    except ClientError as e:
+        raise Exception(e.response['Error']['Message'])
+
+
 def create_hyperparameter_tuning_job_request(args):
     ### Documentation: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/sagemaker.html#SageMaker.Client.create_hyper_parameter_tuning_job
     with open(os.path.join(__cwd__, 'hpo.template.yaml'), 'r') as f:
@@ -655,12 +675,12 @@ def create_hyperparameter_tuning_job_request(args):
 
 
 def create_hyperparameter_tuning_job(client, args):
-    """Create a Sagemaker HPO job"""
+    """Create a SageMaker HPO job"""
     request = create_hyperparameter_tuning_job_request(args)
     try:
         client.create_hyper_parameter_tuning_job(**request)
         hpo_job_name = request['HyperParameterTuningJobName']
-        logging.info("Created Hyperparameter Training Job with name: " + hpo_job_name)
+        logging.info("Created Hyperparameter Tuning Job with name: " + hpo_job_name)
         logging.info("HPO job in SageMaker: https://{}.console.aws.amazon.com/sagemaker/home?region={}#/hyper-tuning-jobs/{}"
             .format(args['region'], args['region'], hpo_job_name))
         logging.info("CloudWatch logs: https://{}.console.aws.amazon.com/cloudwatch/home?region={}#logStream:group=/aws/sagemaker/TrainingJobs;prefix={};streamFilter=typeLogStreamPrefix"
@@ -694,6 +714,13 @@ def get_best_training_job_and_hyperparameters(client, hpo_job_name):
     train_hyperparameters = training_info['HyperParameters']
     train_hyperparameters.pop('_tuning_objective_metric')
     return best_job, train_hyperparameters
+
+
+def stop_hyperparameter_tuning_job(client, job_name):
+    try:
+        client.stop_hyper_parameter_tuning_job(HyperParameterTuningJobName=job_name)
+    except ClientError as e:
+        raise Exception(e.response['Error']['Message'])
 
 
 def create_workteam(client, args):
@@ -738,9 +765,15 @@ def create_labeling_job_request(args):
     algorithm_arn_map = {'us-west-2': '081040173940',
               'us-east-1': '432418664414',
               'us-east-2': '266458841044',
+              'ca-central-1': '918755190332',
               'eu-west-1': '568282634449',
+              'eu-west-2': '487402164563',
+              'eu-central-1': '203001061592',
               'ap-northeast-1': '477331159723',
-              'ap-southeast-1': '454466003867'}
+              'ap-northeast-2': '845288260483',
+              'ap-south-1': '565803892007',
+              'ap-southeast-1': '377565633583',
+              'ap-southeast-2': '454466003867'}
 
     task_map = {'bounding box': 'BoundingBox',
               'image classification': 'ImageMultiClass',
@@ -768,7 +801,12 @@ def create_labeling_job_request(args):
     request['OutputConfig']['S3OutputPath'] = args['output_location']
     request['OutputConfig']['KmsKeyId'] = args['output_encryption_key']
     request['RoleArn'] = args['role']
-    request['LabelCategoryConfigS3Uri'] = args['label_category_config']
+    
+    ### Update or pop label category config s3 uri
+    if not args['label_category_config']:
+        request.pop('LabelCategoryConfigS3Uri')
+    else:
+        request['LabelCategoryConfigS3Uri'] = args['label_category_config']
 
     ### Update or pop stopping conditions
     if not args['max_human_labeled_objects'] and not args['max_percent_objects']:
@@ -903,6 +941,14 @@ def get_labeling_job_outputs(client, labeling_job_name, auto_labeling):
     else:
         active_learning_model_arn = ' '
     return output_manifest, active_learning_model_arn
+
+
+def stop_labeling_job(client, job_name):
+    try:
+        client.stop_labeling_job(LabelingJobName=job_name)
+    except ClientError as e:
+        raise Exception(e.response['Error']['Message'])
+
 
 def create_hyperparameters(hyperparam_args):
     # Validate all values are strings
@@ -1042,6 +1088,13 @@ def get_processing_job_outputs(client, processing_job_name):
     return outputs
 
 
+def stop_processing_job(client, job_name):
+    try:
+        client.stop_processing_job(ProcessingJobName=job_name)
+    except ClientError as e:
+        raise Exception(e.response['Error']['Message'])
+
+
 def id_generator(size=4, chars=string.ascii_uppercase + string.digits):
   return ''.join(random.choice(chars) for _ in range(size))
 
@@ -1057,3 +1110,17 @@ def str_to_bool(str):
     # This distutils function returns an integer representation of the boolean
     # rather than a True/False value. This simply hard casts it.
     return bool(strtobool(str))
+
+def write_output(output_path, output_value, json_encode=False):
+    """Write an output value to the associated path, dumping as a JSON object
+    if specified.
+    Arguments:
+    - output_path: The file path of the output.
+    - output_value: The output value to write to the file.
+    - json_encode: True if the value should be encoded as a JSON object.
+    """
+
+    write_value = json.dumps(output_value) if json_encode else output_value 
+
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(output_path).write_text(write_value)
