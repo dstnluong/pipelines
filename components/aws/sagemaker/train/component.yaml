@@ -98,7 +98,7 @@ inputs:
     description: 'Configuration information for the debug hook parameters, collection configuration, and storage paths.'
     default: '{}'
     type: JsonObject
-  - name: collection_config 
+  - name: collection_config
     description: 'Configuration information for tensor collections.'
     default: '{}'
     type: JsonObject

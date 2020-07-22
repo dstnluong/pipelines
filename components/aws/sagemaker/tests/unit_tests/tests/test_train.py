@@ -61,7 +61,6 @@ class TrainTestCase(unittest.TestCase):
     mock_client = MagicMock()
     mock_args = self.parser.parse_args(required_args + ['--job_name', 'test-job'])
     response = _utils.create_training_job(mock_client, vars(mock_args))
-    print(response)
 
     mock_client.create_training_job.assert_called_once_with(
       AlgorithmSpecification={'TrainingImage': 'test-image', 'TrainingInputMode': 'File'},
@@ -166,8 +165,6 @@ class TrainTestCase(unittest.TestCase):
         _utils.wait_for_debug_rules(mock_client, 'training-job', 0)
       self.assertEqual(mock_client.describe_training_job.call_count, 3)
 
-
-
   def test_get_model_artifacts_from_job(self):
     mock_client = MagicMock()
     mock_client.describe_training_job.return_value = {"ModelArtifacts": {"S3ModelArtifacts": "s3://path/"}}
@@ -199,7 +196,6 @@ class TrainTestCase(unittest.TestCase):
     self.assertEqual(response['AlgorithmSpecification']['TrainingInputMode'], 'File')
     self.assertEqual(response['OutputDataConfig']['S3OutputPath'], 'test-path')
     
-
   def test_metric_definitions(self):
     metric_definition_args = self.parser.parse_args(required_args + ['--metric_definitions', '{"metric1": "regexval1", "metric2": "regexval2"}'])
     response = _utils.create_training_job_request(vars(metric_definition_args))
@@ -223,7 +219,7 @@ class TrainTestCase(unittest.TestCase):
     self.assertIn('CollectionConfigurations', response['DebugHookConfig'])
     response_collection_configurations = response['DebugHookConfig']['CollectionConfigurations']
     self.assertEqual(response_collection_configurations, [{
-        'CollectionName': "collection1", 
+        'CollectionName': "collection1",
         "CollectionParameters": {
             "key1": "value1"
         }
@@ -380,7 +376,7 @@ class TrainTestCase(unittest.TestCase):
       self.assertEqual(response['DebugHookConfig']['LocalPath'], "/local/path/")
       self.assertEqual(response['DebugHookConfig']['HookParameters'], {"key": "value"})
       self.assertEqual(response['DebugHookConfig']['CollectionConfigurations'], [{
-        "CollectionName": "collection1", 
+        "CollectionName": "collection1",
         "CollectionParameters": {
             "key1": "value1"
         }
@@ -419,7 +415,7 @@ class TrainTestCase(unittest.TestCase):
     args = self.parser.parse_args(required_args + ['--spot_instance', 'True', '--max_wait_time', '3600', '--checkpoint_config', '{"S3Uri": "s3://fake-uri/", "LocalPath": "local-path"}'])
     response = _utils.create_training_job_request(vars(args))
     self.assertEqual(response['CheckpointConfig']['S3Uri'], 's3://fake-uri/')
-    self.assertEqual(response['CheckpointConfig']['LocalPath'], 'local-path')  
+    self.assertEqual(response['CheckpointConfig']['LocalPath'], 'local-path')
 
   def test_tags(self):
     args = self.parser.parse_args(required_args + ['--tags', '{"key1": "val1", "key2": "val2"}'])

@@ -3,12 +3,12 @@
 An example pipeline with only [train component](https://github.com/kubeflow/pipelines/tree/master/components/aws/sagemaker/train). The training component has
 
 
-## Prerequisites 
+## Prerequisites
 
 This pipeline uses the exact same setup as [simple_training_pipeline](https://github.com/kubeflow/pipelines/tree/master/samples/contrib/aws-samples/simple_train_pipeline).
 
-## Steps 
-1. Compile the pipeline:  
+## Steps
+1. Compile the pipeline:
    `dsl-compile --py training-pipeline.py --output training-pipeline.tar.gz`
 2. In the Kubeflow UI, upload this compiled pipeline specification (the .tar.gz file) and click on create run.
 3. Once the pipeline completes, you can view the results of each debugger rule under 'Logs'.
@@ -30,7 +30,7 @@ collection_config = {
         "include_regex": ".*"
     }
 }
-debug_rule_config = { 
+debug_rule_config = {
     "RuleConfigurationName": "rule_name"
     "RuleEvaluatorImage": "123456789011.dkr.ecr.<region>.amazonaws.com/sagemaker-xgboost:0.90-2-cpu-py3"
     "RuleParameters": {

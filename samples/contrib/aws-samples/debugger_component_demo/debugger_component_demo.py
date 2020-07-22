@@ -37,12 +37,12 @@ collection_list = {
 }
 
 bad_hyperparameters = {
-    "max_depth": "5", 
-    "eta": "0", 
-    "gamma": "4", 
-    "min_child_weight": "6", 
-    "silent": "0", 
-    "subsample": "0.7", 
+    "max_depth": "5",
+    "eta": "0",
+    "gamma": "4",
+    "min_child_weight": "6",
+    "silent": "0",
+    "subsample": "0.7",
     "num_round": "50"
 }
 

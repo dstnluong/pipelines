@@ -1,4 +1,4 @@
-
+TrainingJobName: ''
 HyperParameters: {}
 AlgorithmSpecification:
   TrainingImage: ''
@@ -31,3 +31,4 @@ Tags: []
 EnableNetworkIsolation: True
 EnableInterContainerTrafficEncryption: False
 EnableManagedSpotTraining: False
+

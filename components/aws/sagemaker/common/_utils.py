@@ -271,7 +271,6 @@ def wait_for_debug_rules(client, training_job_name, poll_interval=31):
         response = client.describe_training_job(TrainingJobName=training_job_name)
         if 'DebugRuleEvaluationStatuses' not in response:
             break
-        
         if debug_rules_completed(response):
             logging.info("Rules have ended with status: ")
             print_debug_rule_status(response, True)
@@ -1147,3 +1146,4 @@ def write_output(output_path, output_value, json_encode=False):
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     Path(output_path).write_text(write_value)
+
