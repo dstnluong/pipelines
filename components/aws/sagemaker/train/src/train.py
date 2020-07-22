@@ -78,6 +78,7 @@ def main(argv=None):
   logging.info('Job request submitted. Waiting for completion...')
   try:
     _utils.wait_for_training_job(client, job_name)
+    _utils.wait_for_debug_rules(client, job_name)
   except:
     raise
   finally:

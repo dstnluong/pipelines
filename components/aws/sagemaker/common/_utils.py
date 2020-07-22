@@ -207,14 +207,23 @@ def create_training_job_request(args):
 
     ### Update DebuggerHookConfig, CollectionConfigurations, and DebugRuleConfigurations
     if args['debug_hook_config']:
+        if 'CollectionConfigurations' in args['debug_hook_config']:
+            logging.into('Existing CollectionConfigurations in debug_hook_config will be overwritten. Move and reformat into collection_config parameter')
+            raise Exception('Could not create job request')
+        if 'S3OutputPath' not in args['debug_hook_config']:
+            logging.info('DebugHookConfig requires an S3OutputPath to be defined.')
+            raise Exception('Could not create job request')
         request['DebugHookConfig'] = args['debug_hook_config']
         request['DebugHookConfig']['CollectionConfigurations'] = []
+    else:
+        request.pop('DebugHookConfig')
 
     if args['collection_config']:
+        if 'DebugHookConfig' not in request:
+            logging.info('CollectionConfigurations requires a debug hook to be configured.')
+            raise Exception('Could not create job request')
         for key, val in args['collection_config'].items():
             request['DebugHookConfig']['CollectionConfigurations'].append({"CollectionName": key, "CollectionParameters": val})
-    else:
-        request['DebugHookConfig'].pop('CollectionConfigurations')
 
     if args['debug_rule_config']:
         request['DebugRuleConfigurations'] = args['debug_rule_config']
@@ -253,7 +262,6 @@ def wait_for_training_job(client, training_job_name, poll_interval=31):
         status = response['TrainingJobStatus']
         if status == 'Completed':
             logging.info("Training job ended with status: " + status)
-            wait_for_debug_rules(client, training_job_name, poll_interval)
             break
         if status == 'Failed':
             message = response['FailureReason']
@@ -268,20 +276,40 @@ def wait_for_debug_rules(client, training_job_name, poll_interval=31):
         response = client.describe_training_job(TrainingJobName=training_job_name)
         if 'DebugRuleEvaluationStatuses' not in response:
             break
-
-        rules_finished = all(map(lambda debug_rule: debug_rule['RuleEvaluationStatus'] != "InProgress", response['DebugRuleEvaluationStatuses']))
-        if rules_finished:
+        
+        if debug_rules_completed(response):
             logging.info("Rules have ended with status: ")
-            for debug_rule in response['DebugRuleEvaluationStatuses']:
-                logging.info(" - {}: {}".format(debug_rule['RuleConfigurationName'], debug_rule['RuleEvaluationStatus']))
-                if 'StatusDetails' in debug_rule and debug_rule['StatusDetails']:
-                    logging.info("   - {}".format(debug_rule['StatusDetails']))
+            print_debug_rule_status(response, True)
+            if debug_rules_errored(response):
+                raise Exception('One or more debug rules have errored.')
             break
         logging.info('Debugger Rule Status:')
-        for debug_rule in response['DebugRuleEvaluationStatuses']:
-            if 'RuleEvaluationStatus'in debug_rule and debug_rule['RuleEvaluationStatus']:
-                logging.info(" - {}: {}".format(debug_rule['RuleConfigurationName'], debug_rule['RuleEvaluationStatus'])) 
+        print_debug_rule_status(response)
         time.sleep(poll_interval)
+
+def debug_rules_errored(response):
+    if 'DebugRuleEvaluationStatuses' in response:
+        for debug_rule in response['DebugRuleEvaluationStatuses']:
+            if debug_rule['RuleEvaluationStatus'] == "Error":
+                return True
+    return False
+
+
+
+def debug_rules_completed(response):
+    if 'DebugRuleEvaluationStatuses' in response:
+        for debug_rule in response['DebugRuleEvaluationStatuses']:
+            if debug_rule['RuleEvaluationStatus'] == "InProgress":
+                return False
+    return True
+
+
+def print_debug_rule_status(response, verbose=False):
+    for debug_rule in response['DebugRuleEvaluationStatuses']:
+        logging.info(" - {}: {}".format(debug_rule['RuleConfigurationName'], debug_rule['RuleEvaluationStatus']))
+        if verbose and 'StatusDetails' in debug_rule:
+            logging.info("   - {}".format(debug_rule['StatusDetails']))
+
 
 
 def get_model_artifacts_from_job(client, job_name):

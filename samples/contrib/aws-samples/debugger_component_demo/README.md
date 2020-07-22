@@ -1,62 +1,51 @@
-# Simple pipeline with only train component
+# Simple pipeline with train component and debugger
 
-An example pipeline with only [train component](https://github.com/kubeflow/pipelines/tree/master/components/aws/sagemaker/train).
+An example pipeline with only [train component](https://github.com/kubeflow/pipelines/tree/master/components/aws/sagemaker/train). The training component has
 
 
 ## Prerequisites 
 
-Make sure you have the setup explained in this [README.md](https://github.com/kubeflow/pipelines/blob/master/samples/contrib/aws-samples/README.md)
-
+This pipeline uses the exact same setup as [simple_training_pipeline](https://github.com/kubeflow/pipelines/tree/master/samples/contrib/aws-samples/simple_train_pipeline).
 
 ## Steps 
 1. Compile the pipeline:  
    `dsl-compile --py training-pipeline.py --output training-pipeline.tar.gz`
 2. In the Kubeflow UI, upload this compiled pipeline specification (the .tar.gz file) and click on create run.
-3. Once the pipeline completes, you can see the outputs under 'Output parameters' in the HPO component's Input/Output section.
+3. Once the pipeline completes, you can view the results of each debugger rule under 'Logs'.
 
-Example inputs to this pipeline :
+Inputs format to `debug_hook_config`, `collection_config`, and `debug_rule_config` :
 ```buildoutcfg
-region : us-east-1
-endpoint_url : <leave this empty>
-image : 382416733822.dkr.ecr.us-east-1.amazonaws.com/kmeans:1
-training_input_mode : File
-hyperparameters : {"k": "10", "feature_dim": "784"}
-channels : In this JSON, along with other parameters you need to pass the S3 Uri where you have data
-
-                [
-                  {
-                    "ChannelName": "train",
-                    "DataSource": {
-                      "S3DataSource": {
-                        "S3Uri": "s3://<your_bucket_name>/mnist_kmeans_example/train_data",
-                        "S3DataType": "S3Prefix",
-                        "S3DataDistributionType": "FullyReplicated"
-                      }
-                    },
-                    "ContentType": "",
-                    "CompressionType": "None",
-                    "RecordWrapperType": "None",
-                    "InputMode": "File"
-                  }
-                ]
-
-instance_type : ml.m5.2xlarge
-instance_count : 1
-volume_size : 50
-max_run_time : 3600
-model_artifact_path : This is where the output model will be stored 
-                      s3://<your_bucket_name>/mnist_kmeans_example/output
-output_encryption_key : <leave this empty>
-network_isolation : True
-traffic_encryption : False
-spot_instance : False
-max_wait_time : 3600
-checkpoint_config : {}
-role : Paste the role ARN that you noted down  
-       (The IAM role with Full SageMaker permissions and S3 access)
-       Example role input->  arn:aws:iam::999999999999:role/SageMakerExecutorKFP
+debug_hook_config = {
+    "S3OutputPath": "s3://<your_bucket_name>/path/for/data/emission/",
+    "LocalPath": "/local/path/for/data/emission/",
+    "HookParameters": {
+        "save_interval": "10"
+    }
+}
+collection_config = {
+    "collection_name_1": {
+        "include_regex": ".*"
+    },
+    "collection_name_2: {
+        "include_regex": ".*"
+    }
+}
+debug_rule_config = { 
+    "RuleConfigurationName": "rule_name"
+    "RuleEvaluatorImage": "123456789011.dkr.ecr.<region>.amazonaws.com/sagemaker-xgboost:0.90-2-cpu-py3"
+    "RuleParameters": {
+        "rule_to_invoke": "LossNotDecreasing",
+        "tensor_regex": ".*"
+    }
+}
 ```
+The provided demo pipeline `training_pipeline.py` uses a built-in rule. When using a built-in rule, `RuleConfigurationName` and `RuleParameters` will take on values listed [here](https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-built-in-rules.html) and `RuleEvaluatorImage`'s possible values are listed [here](https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-docker-images-rules.html#debuger-built-in-registry-ids) will depend on the specified region.
 
+In the case of using and writing your own custom rule, `RuleEvaluatorImage` will take on a value from [here](https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-docker-images-rules.html#debuger-custom-rule-registry-ids). An example of a custom debugger rule can be found [here](https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-createtrainingjob-api.html#debugger-custom-rules-api).
 
 # Resources
-* [Using Amazon built-in algorithms](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-algo-docker-registry-paths.html)
+* [Amazon SageMaker Debugger] (https://docs.aws.amazon.com/sagemaker/latest/dg/train-debugger.html)
+* [Debugger Built-In Rules] (https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-built-in-rules.html)
+* [Pre-built Docker Images for Rules] (https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-docker-images-rules.html)
+* [Debugger API Examples] (https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-createtrainingjob-api.html)
+
