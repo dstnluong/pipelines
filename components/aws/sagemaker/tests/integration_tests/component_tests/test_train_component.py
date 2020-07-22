@@ -20,7 +20,7 @@ from utils import argo_utils
         pytest.param(
             "resources/config/fsx-mnist-training",
             marks=pytest.mark.fsx_test
-        ), 
+        ),
         "resources/config/spot-sample-pipeline-training",
     ],
 )
