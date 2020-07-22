@@ -1146,4 +1146,3 @@ def write_output(output_path, output_value, json_encode=False):
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     Path(output_path).write_text(write_value)
-
