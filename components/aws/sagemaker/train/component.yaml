@@ -116,7 +116,7 @@ outputs:
   - {name: training_image,        description: 'The registry path of the Docker image that contains the training algorithm'}
 implementation:
   container:
-    image: dstnluong/debug-component
+    image: dstnluong/debug-component:latest
     command: ['python3']
     args: [
       train.py,

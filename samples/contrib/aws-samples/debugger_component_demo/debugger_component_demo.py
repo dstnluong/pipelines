@@ -17,8 +17,13 @@ components_dir = os.path.join(cur_file_dir, '../../../../components/aws/sagemake
 
 sagemaker_train_op = components.load_component_from_file(components_dir + '/train/component.yaml')
 
+<<<<<<< HEAD:samples/contrib/aws-samples/debugger_component_demo/training-pipeline.py
 debug_hook = {
     'S3OutputPath':'s3://dusluong-bucket0/xgboost-debugger/hookconfig'
+=======
+debugger_hook_config = {
+    "S3OutputPath":"s3://kubeflow-pipeline-data/mnist_kmeans_example/hookconfig",
+>>>>>>> eafc91fe... Refactored wait_for_debug_rules, added unit tests, updated readme for debugger demo, fixed typos and small errors:samples/contrib/aws-samples/debugger_component_demo/debugger_component_demo.py
 }
 
 debug_hook['CollectionConfigurations'] = []
@@ -38,6 +43,7 @@ collection_list = {
     }
 }
 
+<<<<<<< HEAD:samples/contrib/aws-samples/debugger_component_demo/training-pipeline.py
 for key, val in collection_list.items():
     debug_hook['CollectionConfigurations'].append({"CollectionName": key, "CollectionParameters": val})
 
@@ -59,6 +65,25 @@ loss_rule = {
     'RuleParameters': {
         'rule_to_invoke': 'LossNotDecreasing',
         'tensor_regex': '.*'
+=======
+bad_hyperparameters = {
+    "max_depth": "5", 
+    "alpha": "100", 
+    "eta": "0.5", 
+    "gamma": "4", 
+    "min_child_weight": "6", 
+    "silent": "0", 
+    "subsample": "0.7", 
+    "num_round": "50"
+}
+
+loss_rule = {
+    "RuleConfigurationName": "LossNotDecreasing",
+    "RuleEvaluatorImage": "503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest",
+    "RuleParameters": {
+        "rule_to_invoke": "LossNotDecreasing",
+        "tensor_regex": ".*"
+>>>>>>> eafc91fe... Refactored wait_for_debug_rules, added unit tests, updated readme for debugger demo, fixed typos and small errors:samples/contrib/aws-samples/debugger_component_demo/debugger_component_demo.py
     }
 }
 
@@ -104,7 +129,7 @@ channelObj = {
 }
 
 channelObj['ChannelName'] = 'train'
-channelObj['DataSource']['S3DataSource']['S3Uri'] = 's3://dusluong-bucket0/mnist_kmeans_example/input/valid_data.csv'
+channelObj['DataSource']['S3DataSource']['S3Uri'] = 's3://kubeflow-pipeline-data/mnist_kmeans_example/input/valid_data.csv'
 channelObjList.append(copy.deepcopy(channelObj))
 
 
@@ -123,7 +148,7 @@ def training(
         instance_count=1,
         volume_size=50,
         max_run_time=3600,
-        model_artifact_path='s3://dusluong-bucket0/mnist_kmeans_example/output/model',
+        model_artifact_path='s3://kubeflow-pipeline-data/mnist_kmeans_example/output/model',
         output_encryption_key='',
         network_isolation=True,
         traffic_encryption=False,
@@ -132,7 +157,7 @@ def training(
         checkpoint_config={},
         debug_hook_config=debug_hook,
         debug_rule_config=debug_rule_configurations,
-        role='arn:aws:iam::169544399729:role/kfp-example-sagemaker-execution-role'
+        role=''
         ):
     training = sagemaker_train_op(
         region=region,
