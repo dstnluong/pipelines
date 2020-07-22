@@ -387,11 +387,9 @@ class TrainTestCase(unittest.TestCase):
       }])
 
   def test_hook_bad_args(self):
-      no_s3_uri_args = self.parser.parse_args(required_args + ['--debug_hook_config', '{"LocalPath": "/opt/ml/output/tensors/"}'])
       config_in_hook_args = self.parser.parse_args(required_args + ['--debug_hook_config', '{"S3OutputPath": "s3://fake-uri/", "CollectionConfigurations": [{"CollectionName": "collection1", "CollectionParameters": {"key1": "value1"}}]}'])
-      no_hook_args = self.parser.parse_args(required_args + ['--debug_hook_config', '{}', '--collection_config', '{"collection1": {"key1": "value1"}}'])
 
-      for arg in [no_s3_uri_args, no_hook_args]:
+      for arg in [config_in_hook_args]:
           with self.assertRaises(Exception):
               _utils.create_training_job_request(vars(arg))
 
