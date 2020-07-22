@@ -17,6 +17,59 @@ components_dir = os.path.join(cur_file_dir, '../../../../components/aws/sagemake
 
 sagemaker_train_op = components.load_component_from_file(components_dir + '/train/component.yaml')
 
+debugger_hook_config = {
+    "S3OutputPath":"s3://dusluong-bucket0/xgboost-debugger/hookconfig"
+}
+
+collection_list = {
+    "feature_importance" : {
+        "save_interval": "5"
+    }, 
+    "losses" : {
+        "save_interval": "500"
+    },
+    "average_shap": {
+        "save_interval": "5"
+    },
+    "metrics": {
+        "save_interval": "5"
+    },
+    "gradient": {
+        "save_interval": "5"
+    }
+}
+
+bad_hyperparameters = {
+    "max_depth": "5", 
+    "eta": "0", 
+    "gamma": "4", 
+    "min_child_weight": "6", 
+    "silent": "0", 
+    "subsample": "0.7", 
+    "num_round": "50"
+}
+
+loss_rule = {
+    "RuleConfigurationName": "LossNotDecreasing",
+    "RuleEvaluatorImage": "503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest",
+    "RuleParameters": {
+        "rule_to_invoke": "LossNotDecreasing",
+        "tensor_regex": ".*"
+    }
+}
+
+gradient_rule = {
+    "RuleConfigurationName": "VanishingGradient",
+    "RuleEvaluatorImage": "503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest",
+    "RuleParameters": {
+        "rule_to_invoke": "VanishingGradient",
+        "tensor_regex": ".*"
+    }
+}
+
+
+debug_rule_configurations=[loss_rule, gradient_rule]
+
 channelObjList = []
 
 channelObj = {
@@ -28,39 +81,43 @@ channelObj = {
             'S3DataDistributionType': 'FullyReplicated'
         }
     },
+    'ContentType': "text/csv",
     'CompressionType': 'None',
     'RecordWrapperType': 'None',
     'InputMode': 'File'
 }
 
 channelObj['ChannelName'] = 'train'
-channelObj['DataSource']['S3DataSource']['S3Uri'] = 's3://kubeflow-pipeline-data/mnist_kmeans_example/data'
+channelObj['DataSource']['S3DataSource']['S3Uri'] = 's3://dusluong-bucket0/mnist_kmeans_example/input/valid_data.csv'
 channelObjList.append(copy.deepcopy(channelObj))
 
 
 @dsl.pipeline(
-    name='Training pipeline',
-    description='SageMaker training job test'
+    name='xgboost-mnist-debugger',
+    description='SageMaker training job test with debugger'
 )
 def training(
         region='us-east-1',
         endpoint_url='',
-        image='382416733822.dkr.ecr.us-east-1.amazonaws.com/kmeans:1',
+        image='683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:0.90-2-cpu-py3',
         training_input_mode='File',
-        hyperparameters={"k": "10", "feature_dim": "784"},
+        hyperparameters=bad_hyperparameters,
         channels=channelObjList,
         instance_type='ml.m5.2xlarge',
         instance_count=1,
         volume_size=50,
         max_run_time=3600,
-        model_artifact_path='s3://kubeflow-pipeline-data/mnist_kmeans_example/data',
+        model_artifact_path='s3://dusluong-bucket0/mnist_kmeans_example/output/model',
         output_encryption_key='',
         network_isolation=True,
         traffic_encryption=False,
         spot_instance=False,
         max_wait_time=3600,
         checkpoint_config={},
-        role=''
+        debug_hook_config=debugger_hook_config,
+        collection_config=collection_list,
+        debug_rule_config=debug_rule_configurations,
+        role='arn:aws:iam::169544399729:role/kfp-example-sagemaker-execution-role'
         ):
     training = sagemaker_train_op(
         region=region,
@@ -80,6 +137,9 @@ def training(
         spot_instance=spot_instance,
         max_wait_time=max_wait_time,
         checkpoint_config=checkpoint_config,
+        debug_hook_config=debug_hook_config,
+        collection_config=collection_config,
+        debug_rule_config=debug_rule_config,
         role=role,
     )#.apply(use_aws_secret('aws-secret', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'))
 

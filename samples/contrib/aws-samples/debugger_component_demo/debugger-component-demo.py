@@ -17,6 +17,62 @@ components_dir = os.path.join(cur_file_dir, '../../../../components/aws/sagemake
 
 sagemaker_train_op = components.load_component_from_file(components_dir + '/train/component.yaml')
 
+debug_hook = {
+    'S3OutputPath':'s3://kubeflow-pipeline-data/mnist_kmeans_example/hook_config'
+}
+
+debug_hook['CollectionConfigurations'] = []
+
+collection_list = {
+    'feature_importance' : {
+        'save_interval': '5'
+    }, 
+    'losses' : {
+        'save_interval': '10'
+    },
+    'average_shap': {
+        'save_interval': '5'
+    },
+    'metrics': {
+        'save_interval': '5'
+    }
+}
+
+for key, val in collection_list.items():
+    debug_hook['CollectionConfigurations'].append({'CollectionName': key, 'CollectionParameters': val})
+
+loss_rule = {
+    'RuleConfigurationName': 'LossNotDecreasing',
+    'RuleEvaluatorImage': '503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest',
+    'RuleParameters': {
+        'rule_to_invoke': 'LossNotDecreasing',
+        'tensor_regex': '.*'
+    }
+}
+
+overtraining_rule = {
+    'RuleConfigurationName': 'Overtraining',
+    'RuleEvaluatorImage': '503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest',
+    'RuleParameters': {
+        'rule_to_invoke': 'Overtraining',
+        'patience_train': '10',
+        'patience_validation': '20'
+    }
+}
+
+debug_rule_configurations=[loss_rule, overtraining_rule]
+
+bad_hyperparameters = {
+    'objective': 'reg:squarederror',
+    'max_depth': '5', 
+    'eta': '0', 
+    'gamma': '4', 
+    'min_child_weight': '6', 
+    'silent': '0', 
+    'subsample': '0.7', 
+    'num_round': '50'
+}
+
 channelObjList = []
 
 channelObj = {
@@ -28,38 +84,42 @@ channelObj = {
             'S3DataDistributionType': 'FullyReplicated'
         }
     },
+    'ContentType': 'text/csv',
     'CompressionType': 'None',
     'RecordWrapperType': 'None',
     'InputMode': 'File'
 }
 
 channelObj['ChannelName'] = 'train'
-channelObj['DataSource']['S3DataSource']['S3Uri'] = 's3://kubeflow-pipeline-data/mnist_kmeans_example/data'
+channelObj['DataSource']['S3DataSource']['S3Uri'] = 's3://kubeflow-pipeline-data/mnist_kmeans_example/input/valid_data.csv'
 channelObjList.append(copy.deepcopy(channelObj))
 
 
 @dsl.pipeline(
-    name='Training pipeline',
-    description='SageMaker training job test'
+    name='xgboost-mnist-debugger',
+    description='SageMaker training job test with debugger'
 )
 def training(
         region='us-east-1',
         endpoint_url='',
-        image='382416733822.dkr.ecr.us-east-1.amazonaws.com/kmeans:1',
+        image='683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:0.90-2-cpu-py3',
         training_input_mode='File',
-        hyperparameters={"k": "10", "feature_dim": "784"},
+        hyperparameters=bad_hyperparameters,
         channels=channelObjList,
         instance_type='ml.m5.2xlarge',
         instance_count=1,
         volume_size=50,
         max_run_time=3600,
-        model_artifact_path='s3://kubeflow-pipeline-data/mnist_kmeans_example/data',
+        model_artifact_path='s3://kubeflow-pipeline-data/mnist_kmeans_example/output/model',
         output_encryption_key='',
         network_isolation=True,
         traffic_encryption=False,
         spot_instance=False,
         max_wait_time=3600,
         checkpoint_config={},
+        debug_hook_config=debug_hook,
+        debug_rule_config=debug_rule_configurations,
+        tensorboard_output_config={},
         role=''
         ):
     training = sagemaker_train_op(
@@ -80,6 +140,9 @@ def training(
         spot_instance=spot_instance,
         max_wait_time=max_wait_time,
         checkpoint_config=checkpoint_config,
+        debug_hook_config=debug_hook_config,
+        debug_rule_config=debug_rule_config,
+        tensorboard_output_config=tensorboard_output_config,
         role=role,
     )#.apply(use_aws_secret('aws-secret', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'))
 
