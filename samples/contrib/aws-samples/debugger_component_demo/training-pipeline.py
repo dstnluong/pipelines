@@ -18,7 +18,7 @@ components_dir = os.path.join(cur_file_dir, '../../../../components/aws/sagemake
 sagemaker_train_op = components.load_component_from_file(components_dir + '/train/component.yaml')
 
 debugger_hook_config = {
-    "S3OutputPath":"s3://kubeflow-pipeline-data/mnist_kmeans_example/hookconfig",
+    "S3OutputPath":"s3://dusluong-bucket0/xgboost-debugger/hookconfig"
 }
 
 collection_list = {
@@ -26,12 +26,15 @@ collection_list = {
         "save_interval": "5"
     }, 
     "losses" : {
-        "save_interval": "10"
+        "save_interval": "500"
     },
     "average_shap": {
         "save_interval": "5"
     },
     "metrics": {
+        "save_interval": "5"
+    },
+    "gradient": {
         "save_interval": "5"
     }
 }
@@ -64,6 +67,7 @@ gradient_rule = {
     }
 }
 
+
 debug_rule_configurations=[loss_rule, gradient_rule]
 
 channelObjList = []
@@ -84,7 +88,7 @@ channelObj = {
 }
 
 channelObj['ChannelName'] = 'train'
-channelObj['DataSource']['S3DataSource']['S3Uri'] = 's3://kubeflow-pipeline-data/mnist_kmeans_example/input/valid_data.csv'
+channelObj['DataSource']['S3DataSource']['S3Uri'] = 's3://dusluong-bucket0/mnist_kmeans_example/input/valid_data.csv'
 channelObjList.append(copy.deepcopy(channelObj))
 
 
@@ -103,7 +107,7 @@ def training(
         instance_count=1,
         volume_size=50,
         max_run_time=3600,
-        model_artifact_path='s3://kubeflow-pipeline-data/mnist_kmeans_example/output/model',
+        model_artifact_path='s3://dusluong-bucket0/mnist_kmeans_example/output/model',
         output_encryption_key='',
         network_isolation=True,
         traffic_encryption=False,
@@ -113,7 +117,7 @@ def training(
         debug_hook_config=debugger_hook_config,
         collection_config=collection_list,
         debug_rule_config=debug_rule_configurations,
-        role=''
+        role='arn:aws:iam::169544399729:role/kfp-example-sagemaker-execution-role'
         ):
     training = sagemaker_train_op(
         region=region,
