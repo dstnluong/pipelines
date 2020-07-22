@@ -142,6 +142,31 @@ class TrainTestCase(unittest.TestCase):
       _utils.wait_for_training_job(mock_client, 'training-job', 0)
 
     self.assertEqual(mock_client.describe_training_job.call_count, 4)
+ 
+  def test_wait_for_debug_rules(self):
+      mock_client = MagicMock()
+      mock_client.describe_training_job.side_effect = [
+        {"DebugRuleEvaluationStatuses": [{"RuleConfigurationName": "rule1", "RuleEvaluationStatus": "InProgress"}, {"RuleConfigurationName": "rule2", "RuleEvaluationStatus": "InProgress"}]},
+        {"DebugRuleEvaluationStatuses": [{"RuleConfigurationName": "rule1", "RuleEvaluationStatus": "NoIssuesFound"}, {"RuleConfigurationName": "rule2", "RuleEvaluationStatus": "InProgress"}]},
+        {"DebugRuleEvaluationStatuses": [{"RuleConfigurationName": "rule1", "RuleEvaluationStatus": "NoIssuesFound"}, {"RuleConfigurationName": "rule2", "RuleEvaluationStatus": "IssuesFound"}]},
+        {"DebugRuleEvaluationStatuses": [{"RuleConfigurationName": "rule1", "RuleEvaluationStatus": "Should not be called"}, {"RuleConfigurationName": "rule2", "RuleEvaluationStatus": "Should not be called"}]},
+      ]
+      _utils.wait_for_debug_rules(mock_client, 'training-job', 0)
+      self.assertEqual(mock_client.describe_training_job.call_count, 3)
+
+  def test_wait_for_errored_rule(self):
+      mock_client = MagicMock()
+      mock_client.describe_training_job.side_effect = [
+        {"DebugRuleEvaluationStatuses": [{"RuleConfigurationName": "rule1", "RuleEvaluationStatus": "InProgress"}, {"RuleConfigurationName": "rule2", "RuleEvaluationStatus": "InProgress"}]},
+        {"DebugRuleEvaluationStatuses": [{"RuleConfigurationName": "rule1", "RuleEvaluationStatus": "NoIssuesFound"}, {"RuleConfigurationName": "rule2", "RuleEvaluationStatus": "InProgress"}]},
+        {"DebugRuleEvaluationStatuses": [{"RuleConfigurationName": "rule1", "RuleEvaluationStatus": "NoIssuesFound"}, {"RuleConfigurationName": "rule2", "RuleEvaluationStatus": "Error"}]},
+        {"DebugRuleEvaluationStatuses": [{"RuleConfigurationName": "rule1", "RuleEvaluationStatus": "Should not be called"}, {"RuleConfigurationName": "rule2", "RuleEvaluationStatus": "Should not be called"}]},
+      ]
+      with self.assertRaises(Exception):
+        _utils.wait_for_debug_rules(mock_client, 'training-job', 0)
+      self.assertEqual(mock_client.describe_training_job.call_count, 3)
+
+
 
   def test_get_model_artifacts_from_job(self):
     mock_client = MagicMock()
@@ -173,6 +198,7 @@ class TrainTestCase(unittest.TestCase):
     self.assertEqual(response['Tags'], [])
     self.assertEqual(response['AlgorithmSpecification']['TrainingInputMode'], 'File')
     self.assertEqual(response['OutputDataConfig']['S3OutputPath'], 'test-path')
+    
 
   def test_metric_definitions(self):
     metric_definition_args = self.parser.parse_args(required_args + ['--metric_definitions', '{"metric1": "regexval1", "metric2": "regexval2"}'])
@@ -187,6 +213,26 @@ class TrainTestCase(unittest.TestCase):
     }, {
       'Name': "metric2",
       'Regex': "regexval2"
+    }])
+  
+  def test_collection_config(self):
+    debug_hook_args = ['--debug_hook_config', '{"S3OutputPath":"s3://fake-uri/"}']
+    collection_definition_args = self.parser.parse_args(required_args + debug_hook_args + ['--collection_config', '{"collection1": {"key1": "value1"}, "collection2": {"key2": "value2", "key3": "value3"}}'])
+    response = _utils.create_training_job_request(vars(collection_definition_args))
+
+    self.assertIn('CollectionConfigurations', response['DebugHookConfig'])
+    response_collection_configurations = response['DebugHookConfig']['CollectionConfigurations']
+    self.assertEqual(response_collection_configurations, [{
+        'CollectionName': "collection1", 
+        "CollectionParameters": {
+            "key1": "value1"
+        }
+    }, {
+        'CollectionName': "collection2",
+        'CollectionParameters': {
+            "key2": "value2",
+            "key3": "value3"
+        }
     }])
 
   def test_no_defined_image(self):
@@ -327,6 +373,38 @@ class TrainTestCase(unittest.TestCase):
       with self.assertRaises(Exception):
         _utils.create_training_job_request(vars(arg))
 
+  def test_hook_good_args(self):
+      good_args = self.parser.parse_args(required_args + ['--debug_hook_config', '{"S3OutputPath": "s3://fake-uri/", "LocalPath": "/local/path/", "HookParameters": {"key": "value"}}', '--collection_config', '{"collection1": {"key1": "value1"}}'])
+      response = _utils.create_training_job_request(vars(good_args))
+      self.assertEqual(response['DebugHookConfig']['S3OutputPath'], "s3://fake-uri/")
+      self.assertEqual(response['DebugHookConfig']['LocalPath'], "/local/path/")
+      self.assertEqual(response['DebugHookConfig']['HookParameters'], {"key": "value"})
+      self.assertEqual(response['DebugHookConfig']['CollectionConfigurations'], [{
+        "CollectionName": "collection1", 
+        "CollectionParameters": {
+            "key1": "value1"
+        }
+      }])
+
+  def test_hook_bad_args(self):
+      no_s3_uri_args = self.parser.parse_args(required_args + ['--debug_hook_config', '{"LocalPath": "/opt/ml/output/tensors/"}'])
+      config_in_hook_args = self.parser.parse_args(required_args + ['--debug_hook_config', '{"S3OutputPath": "s3://fake-uri/", "CollectionConfigurations": [{"CollectionName": "collection1", "CollectionParameters": {"key1": "value1"}}]}'])
+      no_hook_args = self.parser.parse_args(required_args + ['--debug_hook_config', '{}', '--collection_config', '{"collection1": {"key1": "value1"}}'])
+
+      for arg in [no_s3_uri_args, no_hook_args]:
+          with self.assertRaises(Exception):
+              _utils.create_training_job_request(vars(arg))
+
+  def test_rule_good_args(self):
+      good_args = self.parser.parse_args(required_args + ['--debug_rule_config', '[{"InstanceType": "ml.m4.xlarge", "LocalPath": "/local/path/", "RuleConfigurationName": "rule_name", "RuleEvaluatorImage": "test-image", "RuleParameters": {"key1": "value1"}, "S3OutputPath": "s3://fake-uri/", "VolumeSizeInGB": 1}]'])
+      response = _utils.create_training_job_request(vars(good_args))
+      self.assertEqual(response['DebugRuleConfigurations'][0]['InstanceType'], 'ml.m4.xlarge')
+      self.assertEqual(response['DebugRuleConfigurations'][0]['LocalPath'], '/local/path/')
+      self.assertEqual(response['DebugRuleConfigurations'][0]['RuleConfigurationName'], 'rule_name')
+      self.assertEqual(response['DebugRuleConfigurations'][0]['RuleEvaluatorImage'], 'test-image')
+      self.assertEqual(response['DebugRuleConfigurations'][0]['RuleParameters'], {"key1": "value1"})
+      self.assertEqual(response['DebugRuleConfigurations'][0]['S3OutputPath'], 's3://fake-uri/')
+      self.assertEqual(response['DebugRuleConfigurations'][0]['VolumeSizeInGB'], 1)
   def test_spot_lesser_wait_time(self):
     args = self.parser.parse_args(required_args + ['--spot_instance', 'True', '--max_wait_time', '3599', '--checkpoint_config', '{"S3Uri": "s3://fake-uri/", "LocalPath": "local-path"}'])
     with self.assertRaises(Exception):
@@ -343,7 +421,7 @@ class TrainTestCase(unittest.TestCase):
     args = self.parser.parse_args(required_args + ['--spot_instance', 'True', '--max_wait_time', '3600', '--checkpoint_config', '{"S3Uri": "s3://fake-uri/", "LocalPath": "local-path"}'])
     response = _utils.create_training_job_request(vars(args))
     self.assertEqual(response['CheckpointConfig']['S3Uri'], 's3://fake-uri/')
-    self.assertEqual(response['CheckpointConfig']['LocalPath'], 'local-path')
+    self.assertEqual(response['CheckpointConfig']['LocalPath'], 'local-path')  
 
   def test_tags(self):
     args = self.parser.parse_args(required_args + ['--tags', '{"key1": "val1", "key2": "val2"}'])
