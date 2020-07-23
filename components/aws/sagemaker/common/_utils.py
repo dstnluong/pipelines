@@ -225,9 +225,6 @@ def create_training_job_request(args):
     else:
         request.pop('DebugRuleConfigurations')
 
-    if args['debug_rule_config']:
-        request['DebugRuleConfigurations'] = args['debug_rule_config']
-
     ### Update tags
     for key, val in args['tags'].items():
         request['Tags'].append({'Key': key, 'Value': val})
@@ -274,8 +271,6 @@ def wait_for_debug_rules(client, training_job_name, poll_interval=31):
         if debug_rules_completed(response):
             logging.info("Rules have ended with status: ")
             print_debug_rule_status(response, True)
-            if debug_rules_errored(response):
-                raise Exception('One or more debug rules have errored.')
             break
         logging.info('Debugger Rule Status:')
         print_debug_rule_status(response)

@@ -17,31 +17,6 @@ components_dir = os.path.join(cur_file_dir, '../../../../components/aws/sagemake
 
 sagemaker_train_op = components.load_component_from_file(components_dir + '/train/component.yaml')
 
-debugger_hook_config = {
-    "S3OutputPath":"s3://dusluong-bucket0/emission-demo",
-    "LocalPath":"/opt/ml/output/tensors",
-    "HookParameters": {
-        "save_interval": "10"
-    }
-}
-
-collection_list = {
-    "gradients" : {
-        "save_interval": "50"
-    }, 
-    "losses" : {
-        "save_interval": "10"
-    }
-}
-
-debug_rule_configurations=[{
-    "RuleConfigurationName": "Amazon-VanishingGradient",
-    "RuleEvaluatorImage": "503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest",
-    "RuleParameters": {
-      "rule_to_invoke": "Overfit"
-    }
-}]
-
 channelObjList = []
 
 channelObj = {
@@ -59,7 +34,7 @@ channelObj = {
 }
 
 channelObj['ChannelName'] = 'train'
-channelObj['DataSource']['S3DataSource']['S3Uri'] = 's3://dusluong-bucket0/mnist_kmeans_example/training-data'
+channelObj['DataSource']['S3DataSource']['S3Uri'] = 's3://kubeflow-pipeline-data/mnist_kmeans_example/data'
 channelObjList.append(copy.deepcopy(channelObj))
 
 
@@ -78,17 +53,14 @@ def training(
         instance_count=1,
         volume_size=50,
         max_run_time=3600,
-        model_artifact_path='s3://dusluong-bucket0/mnist_kmeans_example/output/model',
+        model_artifact_path='s3://kubeflow-pipeline-data/mnist_kmeans_example/data',
         output_encryption_key='',
         network_isolation=True,
         traffic_encryption=False,
         spot_instance=False,
         max_wait_time=3600,
         checkpoint_config={},
-        debug_hook_config=debugger_hook_config,
-        collection_config=collection_list,
-        debug_rule_config=debug_rule_configurations,
-        role='arn:aws:iam::169544399729:role/kfp-example-sagemaker-execution-role'
+        role=''
         ):
     training = sagemaker_train_op(
         region=region,
@@ -108,9 +80,6 @@ def training(
         spot_instance=spot_instance,
         max_wait_time=max_wait_time,
         checkpoint_config=checkpoint_config,
-        debug_hook_config=debug_hook_config,
-        collection_config=collection_config,
-        debug_rule_config=debug_rule_config,
         role=role,
     )#.apply(use_aws_secret('aws-secret', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'))
 

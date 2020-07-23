@@ -23,10 +23,10 @@ debugger_hook_config = {
 
 collection_list = {
     "feature_importance" : {
-        "save_interval": "5"
+        "save_interval": "10"
     }, 
     "losses" : {
-        "save_interval": "500"
+        "save_interval": "10"
     },
     "average_shap": {
         "save_interval": "5"
