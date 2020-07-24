@@ -44,8 +44,8 @@ The provided demo pipeline `training_pipeline.py` uses a built-in rule. When usi
 In the case of using and writing your own custom rule, `RuleEvaluatorImage` will take on a value from [here](https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-docker-images-rules.html#debuger-custom-rule-registry-ids). An example of a custom debugger rule can be found [here](https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-createtrainingjob-api.html#debugger-custom-rules-api).
 
 # Resources
-* [Amazon SageMaker Debugger] (https://docs.aws.amazon.com/sagemaker/latest/dg/train-debugger.html)
-* [Debugger Built-In Rules] (https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-built-in-rules.html)
-* [Pre-built Docker Images for Rules] (https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-docker-images-rules.html)
-* [Debugger API Examples] (https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-createtrainingjob-api.html)
+* [Amazon SageMaker Debugger](https://docs.aws.amazon.com/sagemaker/latest/dg/train-debugger.html)
+* [Debugger Built-In Rules](https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-built-in-rules.html)
+* [Pre-built Docker Images for Rules](https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-docker-images-rules.html)
+* [Debugger API Examples](https://docs.aws.amazon.com/sagemaker/latest/dg/debugger-createtrainingjob-api.html)
 
