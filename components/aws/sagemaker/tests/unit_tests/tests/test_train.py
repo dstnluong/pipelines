@@ -348,21 +348,22 @@ class TrainTestCase(unittest.TestCase):
       with self.assertRaises(Exception):
         _utils.create_training_job_request(vars(arg))
 
-  def test_hook_min_good_args(self):
-      good_args = self.parser.parse_args(required_args + ['--debug_hook_config', '{"S3OutputPath": "s3://fake-uri/"}'])
-      response = _utils.create_training_job_request(vars(good_args))
-      self.assertEqual(response['DebugHookConfig']['S3OutputPath'], "s3://fake-uri/")
+  def test_hook_min_args(self):
+    good_args = self.parser.parse_args(required_args + ['--debug_hook_config', '{"S3OutputPath": "s3://fake-uri/"}'])
+    response = _utils.create_training_job_request(vars(good_args))
+    self.assertEqual(response['DebugHookConfig']['S3OutputPath'], "s3://fake-uri/")
 
-  def test_hook_max_good_args(self):
-      good_args = self.parser.parse_args(required_args + ['--debug_hook_config', '{"S3OutputPath": "s3://fake-uri/", "LocalPath": "/local/path/", "HookParameters": {"key": "value"}, "CollectionConfigurations": [{"CollectionName": "collection1", "CollectionParameters": {"key1": "value1"}}, {"CollectionName": "collection2", "CollectionParameters": {"key2": "value2", "key3": "value3"}}]}'])
-      response = _utils.create_training_job_request(vars(good_args))
-      self.assertEqual(response['DebugHookConfig']['S3OutputPath'], "s3://fake-uri/")
-      self.assertEqual(response['DebugHookConfig']['LocalPath'], "/local/path/")
-      self.assertEqual(response['DebugHookConfig']['HookParameters'], {"key": "value"})
-      self.assertEqual(response['DebugHookConfig']['CollectionConfigurations'], [{
+  def test_hook_max_args(self):
+    good_args = self.parser.parse_args(required_args + ['--debug_hook_config', '{"S3OutputPath": "s3://fake-uri/", "LocalPath": "/local/path/", "HookParameters": {"key": "value"}, "CollectionConfigurations": [{"CollectionName": "collection1", "CollectionParameters": {"key1": "value1"}}, {"CollectionName": "collection2", "CollectionParameters": {"key2": "value2", "key3": "value3"}}]}'])
+    response = _utils.create_training_job_request(vars(good_args))
+    self.assertEqual(response['DebugHookConfig']['S3OutputPath'], "s3://fake-uri/")
+    self.assertEqual(response['DebugHookConfig']['LocalPath'], "/local/path/")
+    self.assertEqual(response['DebugHookConfig']['HookParameters'], {"key": "value"})
+    self.assertEqual(response['DebugHookConfig']['CollectionConfigurations'], [
+      {
         "CollectionName": "collection1",
         "CollectionParameters": {
-            "key1": "value1"
+          "key1": "value1"
         }
       }, {
         "CollectionName": "collection2", 
@@ -371,18 +372,25 @@ class TrainTestCase(unittest.TestCase):
           "key3": "value3"
         }
       }
-      ])
+    ])
 
-  def test_rule_good_args(self):
-      good_args = self.parser.parse_args(required_args + ['--debug_rule_config', '[{"InstanceType": "ml.m4.xlarge", "LocalPath": "/local/path/", "RuleConfigurationName": "rule_name", "RuleEvaluatorImage": "test-image", "RuleParameters": {"key1": "value1"}, "S3OutputPath": "s3://fake-uri/", "VolumeSizeInGB": 1}]'])
-      response = _utils.create_training_job_request(vars(good_args))
-      self.assertEqual(response['DebugRuleConfigurations'][0]['InstanceType'], 'ml.m4.xlarge')
-      self.assertEqual(response['DebugRuleConfigurations'][0]['LocalPath'], '/local/path/')
-      self.assertEqual(response['DebugRuleConfigurations'][0]['RuleConfigurationName'], 'rule_name')
-      self.assertEqual(response['DebugRuleConfigurations'][0]['RuleEvaluatorImage'], 'test-image')
-      self.assertEqual(response['DebugRuleConfigurations'][0]['RuleParameters'], {"key1": "value1"})
-      self.assertEqual(response['DebugRuleConfigurations'][0]['S3OutputPath'], 's3://fake-uri/')
-      self.assertEqual(response['DebugRuleConfigurations'][0]['VolumeSizeInGB'], 1)
+  def test_rule_max_args(self):
+    good_args = self.parser.parse_args(required_args + ['--debug_rule_config', '[{"InstanceType": "ml.m4.xlarge", "LocalPath": "/local/path/", "RuleConfigurationName": "rule_name", "RuleEvaluatorImage": "test-image", "RuleParameters": {"key1": "value1"}, "S3OutputPath": "s3://fake-uri/", "VolumeSizeInGB": 1}]'])
+    response = _utils.create_training_job_request(vars(good_args))
+    self.assertEqual(response['DebugRuleConfigurations'][0]['InstanceType'], 'ml.m4.xlarge')
+    self.assertEqual(response['DebugRuleConfigurations'][0]['LocalPath'], '/local/path/')
+    self.assertEqual(response['DebugRuleConfigurations'][0]['RuleConfigurationName'], 'rule_name')
+    self.assertEqual(response['DebugRuleConfigurations'][0]['RuleEvaluatorImage'], 'test-image')
+    self.assertEqual(response['DebugRuleConfigurations'][0]['RuleParameters'], {"key1": "value1"})
+    self.assertEqual(response['DebugRuleConfigurations'][0]['S3OutputPath'], 's3://fake-uri/')
+    self.assertEqual(response['DebugRuleConfigurations'][0]['VolumeSizeInGB'], 1)
+
+  def test_rule_min_good_args(self):
+    good_args = self.parser.parse_args(required_args + ['--debug_rule_config', '[{"RuleConfigurationName": "rule_name", "RuleEvaluatorImage": "test-image"}]'])
+    response = _utils.create_training_job_request(vars(good_args))
+    self.assertEqual(response['DebugRuleConfigurations'][0]['RuleConfigurationName'], 'rule_name')
+    self.assertEqual(response['DebugRuleConfigurations'][0]['RuleEvaluatorImage'], 'test-image')
+
   def test_spot_lesser_wait_time(self):
     args = self.parser.parse_args(required_args + ['--spot_instance', 'True', '--max_wait_time', '3599', '--checkpoint_config', '{"S3Uri": "s3://fake-uri/", "LocalPath": "local-path"}'])
     with self.assertRaises(Exception):

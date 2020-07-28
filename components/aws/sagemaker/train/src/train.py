@@ -42,6 +42,7 @@ def create_parser():
   parser.add_argument('--traffic_encryption', type=_utils.str_to_bool, required=False, help='Encrypts all communications between ML compute instances in distributed training.', default=False)
   parser.add_argument('--debug_hook_config', type=_utils.yaml_or_json_str, required=False, help='Configuration information for the debug hook parameters, collection configuration, and storage paths.', default={})
   parser.add_argument('--debug_rule_config', type=_utils.yaml_or_json_str, required=False, help='Configuration information for debugging rules.', default=[])
+  parser.add_argument('--tensorboard_output_config', type=_utils.yaml_or_json_str, required=False, help='Configuration of storage locations for TensorBoard output.', default={})
 
   ### Start spot instance support
   parser.add_argument('--spot_instance', type=_utils.str_to_bool, required=False, help='Use managed spot training.', default=False)

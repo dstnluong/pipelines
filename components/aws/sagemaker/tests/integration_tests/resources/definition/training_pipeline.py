@@ -29,6 +29,7 @@ def training_pipeline(
     checkpoint_config="",
     debug_hook_config="",
     debug_rule_config="",
+    tensorboard_output_config="",
     role="",
 ):
     sagemaker_train_op(
@@ -54,6 +55,7 @@ def training_pipeline(
         checkpoint_config=checkpoint_config,
         debug_hook_config=debug_hook_config,
         debug_rule_config=debug_rule_config,
+        tensorboard_output_config=tensorboard_output_config,
         role=role,
     )
 

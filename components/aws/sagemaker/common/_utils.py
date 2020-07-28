@@ -216,6 +216,11 @@ def create_training_job_request(args):
     else:
         request.pop('DebugRuleConfigurations')
 
+    if args['tensorboard_output_config']:
+        request['TensorBoardOutputConfig'] = args['tensorboard_output_config']
+    else:
+        request.pop('TensorBoardOutputConfig')
+
     ### Update tags
     for key, val in args['tags'].items():
         request['Tags'].append({'Key': key, 'Value': val})

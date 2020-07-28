@@ -132,6 +132,7 @@ def training(
         checkpoint_config={},
         debug_hook_config=debug_hook,
         debug_rule_config=debug_rule_configurations,
+        tensorboard_output_config={},
         role=''
         ):
     training = sagemaker_train_op(
@@ -154,6 +155,7 @@ def training(
         checkpoint_config=checkpoint_config,
         debug_hook_config=debug_hook_config,
         debug_rule_config=debug_rule_config,
+        tensorboard_output_config=tensorboard_output_config,
         role=role,
     )#.apply(use_aws_secret('aws-secret', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'))
 
