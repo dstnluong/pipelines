@@ -194,7 +194,7 @@ class TrainTestCase(unittest.TestCase):
     self.assertEqual(response['Tags'], [])
     self.assertEqual(response['AlgorithmSpecification']['TrainingInputMode'], 'File')
     self.assertEqual(response['OutputDataConfig']['S3OutputPath'], 'test-path')
-    
+
   def test_metric_definitions(self):
     metric_definition_args = self.parser.parse_args(required_args + ['--metric_definitions', '{"metric1": "regexval1", "metric2": "regexval2"}'])
     response = _utils.create_training_job_request(vars(metric_definition_args))
@@ -209,7 +209,7 @@ class TrainTestCase(unittest.TestCase):
       'Name': "metric2",
       'Regex': "regexval2"
     }])
-  
+
   def test_no_defined_image(self):
     # Pass the image to pass the parser
     no_image_args = required_args.copy()
