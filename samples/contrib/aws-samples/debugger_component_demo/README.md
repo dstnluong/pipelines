@@ -40,7 +40,7 @@ debug_hook_config = {
 
 debug_rule_config = {
     "RuleConfigurationName": "rule_name"
-    "RuleEvaluatorImage": "123456789011.dkr.ecr.<region>.amazonaws.com/sagemaker-xgboost:0.90-2-cpu-py3"
+    "RuleEvaluatorImage": "503895931360.dkr.ecr.ap-south-1.amazonaws.com/sagemaker-debugger-rules:latest"
     "RuleParameters": {
         "rule_to_invoke": "LossNotDecreasing",
         "tensor_regex": ".*"
