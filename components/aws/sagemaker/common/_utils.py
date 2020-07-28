@@ -205,19 +205,10 @@ def create_training_job_request(args):
 
     enable_spot_instance_support(request, args)
 
-    ### Update DebuggerHookConfig, CollectionConfigurations, and DebugRuleConfigurations
+    ### Update DebugHookConfig and DebugRuleConfigurations
     if args['debug_hook_config']:
-        if 'CollectionConfigurations' in args['debug_hook_config']:
-            logging.into('Existing CollectionConfigurations in debug_hook_config will be overwritten. Move and reformat into collection_config parameter')
-            raise Exception('Could not create job request')
         request['DebugHookConfig'] = args['debug_hook_config']
-        request['DebugHookConfig']['CollectionConfigurations'] = []
-
-    if args['collection_config']:
-        for key, val in args['collection_config'].items():
-            request['DebugHookConfig']['CollectionConfigurations'].append({"CollectionName": key, "CollectionParameters": val})
-
-    if not args['debug_hook_config'] and not args['collection_config']:
+    else:
         request.pop('DebugHookConfig')
 
     if args['debug_rule_config']:
@@ -264,15 +255,18 @@ def wait_for_training_job(client, training_job_name, poll_interval=31):
 
 
 def wait_for_debug_rules(client, training_job_name, poll_interval=31):
+    first_poll = True
     while(True):
         response = client.describe_training_job(TrainingJobName=training_job_name)
         if 'DebugRuleEvaluationStatuses' not in response:
             break
+        if first_poll:
+            logging.info("Polling for status of all debug rules:")
+            first_poll = False
         if debug_rules_completed(response):
-            logging.info("Rules have ended with status: ")
+            logging.info("Rules have ended with status:\n")
             print_debug_rule_status(response, True)
             break
-        logging.info('Debugger Rule Status:')
         print_debug_rule_status(response)
         time.sleep(poll_interval)
 
@@ -293,13 +287,24 @@ def debug_rules_completed(response):
     return True
 
 
-def print_debug_rule_status(response, verbose=False):
+def print_debug_rule_status(response, last_print=False):
     for debug_rule in response['DebugRuleEvaluationStatuses']:
-        logging.info(" - {}: {}".format(debug_rule['RuleConfigurationName'], debug_rule['RuleEvaluationStatus']))
-        if verbose and 'StatusDetails' in debug_rule:
-            logging.info("   - {}".format(debug_rule['StatusDetails']).rstrip())
-
-
+        line_ending = "\n" if last_print else ""
+        if 'StatusDetails' in debug_rule:
+            status_details = "- {}{}".format(debug_rule['StatusDetails'].rstrip(), line_ending)
+            line_ending = ""
+        else:
+            status_details = ""
+        rule_status = "- {}: {}{}".format(debug_rule['RuleConfigurationName'], debug_rule['RuleEvaluationStatus'], line_ending)
+        if debug_rule['RuleEvaluationStatus'] == "Error":
+            logging.error("{}".format(rule_status))
+            if last_print and status_details:
+                logging.error("  {}".format(status_details))
+        else:
+            logging.info(" {}".format(rule_status))
+            if last_print and status_details:
+                logging.info("   {}".format(status_details))
+    logging.info(50 * "-")
 
 def get_model_artifacts_from_job(client, job_name):
   info = client.describe_training_job(TrainingJobName=job_name)

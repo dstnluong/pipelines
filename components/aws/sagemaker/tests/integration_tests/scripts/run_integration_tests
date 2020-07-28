@@ -187,10 +187,7 @@ else
   wait
 fi
 
-generate_iam_role_name
-"$cwd"/generate_iam_role ${EKS_CLUSTER_NAME} ${OIDC_ROLE_NAME} ${REGION} ${KFP_NAMESPACE} ${KFP_SERVICE_ACCOUNT}
 install_kfp
-install_generated_role
 
 pytest_args=( --region "${REGION}" --role-arn "${SAGEMAKER_EXECUTION_ROLE_ARN}" --s3-data-bucket "${S3_DATA_BUCKET}" --minio-service-port "${MINIO_LOCAL_PORT}" --kfp-namespace "${KFP_NAMESPACE}" )
 

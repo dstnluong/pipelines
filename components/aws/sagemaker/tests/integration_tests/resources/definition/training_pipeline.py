@@ -28,7 +28,6 @@ def training_pipeline(
     max_wait_time="",
     checkpoint_config="",
     debug_hook_config="",
-    collection_config="",
     debug_rule_config="",
     role="",
 ):
@@ -54,7 +53,6 @@ def training_pipeline(
         max_wait_time=max_wait_time,
         checkpoint_config=checkpoint_config,
         debug_hook_config=debug_hook_config,
-        collection_config=collection_config,
         debug_rule_config=debug_rule_config,
         role=role,
     )

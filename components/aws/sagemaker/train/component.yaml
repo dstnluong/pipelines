@@ -98,10 +98,6 @@ inputs:
     description: 'Configuration information for the debug hook parameters, collection configuration, and storage paths.'
     default: '{}'
     type: JsonObject
-  - name: collection_config
-    description: 'Configuration information for tensor collections.'
-    default: '{}'
-    type: JsonObject
   - name: debug_rule_config
     description: 'Configuration information for debugging rules.'
     default: '[]'
@@ -142,7 +138,6 @@ implementation:
       --network_isolation, {inputValue: network_isolation},
       --traffic_encryption, {inputValue: traffic_encryption},
       --debug_hook_config, {inputValue: debug_hook_config},
-      --collection_config, {inputValue: collection_config},
       --debug_rule_config, {inputValue: debug_rule_config},
       --spot_instance, {inputValue: spot_instance},
       --max_wait_time, {inputValue: max_wait_time},

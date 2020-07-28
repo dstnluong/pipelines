@@ -21,8 +21,7 @@ VpcConfig:
 StoppingCondition:
   MaxRuntimeInSeconds: 86400
   MaxWaitTimeInSeconds: 86400
-DebugHookConfig:
-  CollectionConfigurations: []
+DebugHookConfig: {}
 DebugRuleConfigurations: []
 CheckpointConfig:
   S3Uri: ''

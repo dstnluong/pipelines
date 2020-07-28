@@ -17,54 +17,74 @@ components_dir = os.path.join(cur_file_dir, '../../../../components/aws/sagemake
 
 sagemaker_train_op = components.load_component_from_file(components_dir + '/train/component.yaml')
 
-debugger_hook_config = {
-    "S3OutputPath":"s3://kubeflow-pipeline-data/mnist_kmeans_example/hookconfig",
+debug_hook = {
+    'S3OutputPath':'s3://kubeflow-pipeline-data/mnist_kmeans_example/hook_config'
 }
+
+debug_hook['CollectionConfigurations'] = []
 
 collection_list = {
-    "feature_importance" : {
-        "save_interval": "5"
+    'feature_importance' : {
+        'save_interval': '5'
     }, 
-    "losses" : {
-        "save_interval": "10"
+    'losses' : {
+        'save_interval': '10'
     },
-    "average_shap": {
-        "save_interval": "5"
+    'average_shap': {
+        'save_interval': '5'
     },
-    "metrics": {
-        "save_interval": "5"
+    'metrics': {
+        'save_interval': '5'
     }
 }
 
-bad_hyperparameters = {
-    "max_depth": "5",
-    "eta": "0",
-    "gamma": "4",
-    "min_child_weight": "6",
-    "silent": "0",
-    "subsample": "0.7",
-    "num_round": "50"
-}
+for key, val in collection_list.items():
+    debug_hook['CollectionConfigurations'].append({'CollectionName': key, 'CollectionParameters': val})
 
 loss_rule = {
-    "RuleConfigurationName": "LossNotDecreasing",
-    "RuleEvaluatorImage": "503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest",
-    "RuleParameters": {
-        "rule_to_invoke": "LossNotDecreasing",
-        "tensor_regex": ".*"
+    'RuleConfigurationName': 'LossNotDecreasing',
+    'RuleEvaluatorImage': '503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest',
+    'RuleParameters': {
+        'rule_to_invoke': 'LossNotDecreasing',
+        'tensor_regex': '.*'
     }
 }
 
-gradient_rule = {
-    "RuleConfigurationName": "VanishingGradient",
-    "RuleEvaluatorImage": "503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest",
-    "RuleParameters": {
-        "rule_to_invoke": "VanishingGradient",
-        "tensor_regex": ".*"
+overtraining_rule = {
+    'RuleConfigurationName': 'Overtraining',
+    'RuleEvaluatorImage': '503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest',
+    'RuleParameters': {
+        'rule_to_invoke': 'Overtraining',
+        'patience_train': '10',
+        'patience_validation': '20'
     }
 }
 
-debug_rule_configurations=[loss_rule, gradient_rule]
+custom_rule = {
+    'RuleConfigurationName': 'CustomGradientRule',
+    'InstanceType': 'ml.t3.medium',
+    'VolumeSizeInGB': 1,
+    'RuleEvaluatorImage': '864354269164.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rule-evaluator:latest',
+    'S3OutputPath': 's3://kubeflow-pipeline-data/mnist_kmeans_example/custom_rules/custom_rules.py',
+    'RuleParameters': {
+        'rule_to_invoke': 'CustomGradientRule',
+        'tensor_regex': '.*',
+        'threshold': '20'
+    }
+}
+
+debug_rule_configurations=[loss_rule, overtraining_rule, custom_rule]
+
+bad_hyperparameters = {
+    'objective': 'reg:squarederror',
+    'max_depth': '5', 
+    'eta': '0', 
+    'gamma': '4', 
+    'min_child_weight': '6', 
+    'silent': '0', 
+    'subsample': '0.7', 
+    'num_round': '50'
+}
 
 channelObjList = []
 
@@ -77,7 +97,7 @@ channelObj = {
             'S3DataDistributionType': 'FullyReplicated'
         }
     },
-    'ContentType': "text/csv",
+    'ContentType': 'text/csv',
     'CompressionType': 'None',
     'RecordWrapperType': 'None',
     'InputMode': 'File'
@@ -110,8 +130,7 @@ def training(
         spot_instance=False,
         max_wait_time=3600,
         checkpoint_config={},
-        debug_hook_config=debugger_hook_config,
-        collection_config=collection_list,
+        debug_hook_config=debug_hook,
         debug_rule_config=debug_rule_configurations,
         role=''
         ):
@@ -134,7 +153,6 @@ def training(
         max_wait_time=max_wait_time,
         checkpoint_config=checkpoint_config,
         debug_hook_config=debug_hook_config,
-        collection_config=collection_config,
         debug_rule_config=debug_rule_config,
         role=role,
     )#.apply(use_aws_secret('aws-secret', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'))
