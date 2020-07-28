@@ -60,20 +60,7 @@ overtraining_rule = {
     }
 }
 
-custom_rule = {
-    'RuleConfigurationName': 'CustomGradientRule',
-    'InstanceType': 'ml.t3.medium',
-    'VolumeSizeInGB': 1,
-    'RuleEvaluatorImage': '864354269164.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rule-evaluator:latest',
-    'S3OutputPath': 's3://kubeflow-pipeline-data/mnist_kmeans_example/custom_rules/custom_rules.py',
-    'RuleParameters': {
-        'rule_to_invoke': 'CustomGradientRule',
-        'tensor_regex': '.*',
-        'threshold': '20'
-    }
-}
-
-debug_rule_configurations=[loss_rule, overtraining_rule, custom_rule]
+debug_rule_configurations=[loss_rule, overtraining_rule]
 
 bad_hyperparameters = {
     'objective': 'reg:squarederror',
