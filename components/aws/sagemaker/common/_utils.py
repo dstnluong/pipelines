@@ -205,7 +205,6 @@ def create_training_job_request(args):
 
     enable_spot_instance_support(request, args)
 
-    ### Update DebugHookConfig and DebugRuleConfigurations
     if args['debug_hook_config']:
         request['DebugHookConfig'] = args['debug_hook_config']
     else:
