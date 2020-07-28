@@ -119,4 +119,3 @@ role : Paste the role ARN that you noted down
 
 # Resources
 * [Using Amazon built-in algorithms](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-algo-docker-registry-paths.html)
-
