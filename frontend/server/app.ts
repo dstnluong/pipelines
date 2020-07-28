@@ -34,7 +34,6 @@ import { getIndexHTMLHandler } from './handlers/index-html';
 
 import proxyMiddleware from './proxy-middleware';
 import { Server } from 'http';
-import { HACK_FIX_HPM_PARTIAL_RESPONSE_HEADERS } from './consts';
 
 function getRegisterHandler(app: Application, basePath: string) {
   return (
@@ -164,7 +163,6 @@ function createUIServer(options: UIConfigs) {
       onProxyReq: proxyReq => {
         console.log('Metadata proxied request: ', (proxyReq as any).path);
       },
-      headers: HACK_FIX_HPM_PARTIAL_RESPONSE_HEADERS,
       target: envoyServiceAddress,
     }),
   );
@@ -195,7 +193,6 @@ function createUIServer(options: UIConfigs) {
       onProxyReq: proxyReq => {
         console.log('Proxied request: ', proxyReq.path);
       },
-      headers: HACK_FIX_HPM_PARTIAL_RESPONSE_HEADERS,
       target: apiServerAddress,
     }),
   );
@@ -206,7 +203,6 @@ function createUIServer(options: UIConfigs) {
       onProxyReq: proxyReq => {
         console.log('Proxied request: ', proxyReq.path);
       },
-      headers: HACK_FIX_HPM_PARTIAL_RESPONSE_HEADERS,
       pathRewrite: pathStr =>
         pathStr.startsWith(basePath) ? pathStr.substr(basePath.length, pathStr.length) : pathStr,
       target: apiServerAddress,
